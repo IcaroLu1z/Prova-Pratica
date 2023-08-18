@@ -112,7 +112,7 @@ def plot_parallelepiped(x, y, z):
     ax.bar3d(0, 0, 0, x_len, y_len, z_len, shade=True)
     
     # Aplicando rotação
-    ax.view_init(elev=x, azim=y)
+    ax.view_init(elev=x, azim=y) 
 
     plt.show()
 
