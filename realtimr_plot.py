@@ -2,10 +2,11 @@ import serial
 import struct
 import threading
 import numpy as np
+import prova
 import matplotlib.pyplot as plt
 
 # Configuração da porta serial
-PORT = 'COM7'
+PORT = 'COM5'
 BAUD_RATE = 9600
 
 # Definição dos protocolos
@@ -61,12 +62,13 @@ def update_plot():
     fig.canvas.draw()
     fig.canvas.flush_events()
 
+ser = serial.Serial(PORT, BAUD_RATE)
 def serial_listener():
-    ser = serial.Serial(PORT, BAUD_RATE)
     while True:
-        data = ser.read(PACKET_LENGTH)
-        packet_id, x, y, z = parse_packet(data)
-        if packet_id == ID_POSITION:
+        data = prova.unpack_data()
+        packet_id, x, y, z = data["packet_id"], data["x"], data["y"], data["z"]
+
+        if int.from_bytes(packet_id, byteorder='big') == ID_POSITION:
             positions['x'].append(x)
             positions['y'].append(y)
             positions['z'].append(z)
@@ -74,7 +76,7 @@ def serial_listener():
                 del positions['x'][0]
                 del positions['y'][0]
                 del positions['z'][0]
-        elif packet_id == ID_SCALE:
+        elif int.from_bytes(packet_id, byteorder='big') == ID_SCALE:
             scales.append(x)  # ou y ou z, já que são iguais
             if len(scales) > 100:
                 del scales[0]

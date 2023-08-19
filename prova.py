@@ -45,19 +45,22 @@ def unpack_data():
     index = 0  # Index to track current byte position
     result = {}  # Dictionary to store unpacked values
 
-    while 1:
-        #byte = data[index]  # Get the current byte
+    while True:
         byte = ser.read(1)
+
+        if not byte:
+            # No more data to read, break out of the loop
+            break
 
         if state == "START1":
             # Check if the current byte matches the expected value
-            if byte == 0xAA:
+            if byte == b'\xaa':
                 state = "START2"  # Move to the next state
             else:
                 state = "START1"
 
         elif state == "START2":
-            if byte == 0xFF:
+            if byte == b'\xff':
                 state = "PACKET_ID"
             else:
                 state = "START1"
@@ -68,15 +71,15 @@ def unpack_data():
 
         elif state == "X":
             # Unpack the signed byte using struct and store the value
-            result["x"] = struct.unpack('!b', bytes([byte]))[0]
+            result["x"] = struct.unpack('!b', byte)[0]
             state = "Y"
 
         elif state == "Y":
-            result["y"] = struct.unpack('!b', bytes([byte]))[0]
+            result["y"] = struct.unpack('!b', byte)[0]
             state = "Z"
 
         elif state == "Z":
-            result["z"] = struct.unpack('!b', bytes([byte]))[0]
+            result["z"] = struct.unpack('!b', byte)[0]
             state = "CHECKSUM"
 
         elif state == "CHECKSUM":
@@ -84,11 +87,12 @@ def unpack_data():
             state = "END"
 
         elif state == "END":
-            if byte == 0xAF:
+            if byte == b'\xaf':
                 # All bytes unpacked successfully, return the result
                 return result
             else:
                 state = "START1"
+
 
 
 
@@ -123,16 +127,16 @@ def update_scale(scale):
 import serial
 import threading
 
-ser = serial.Serial('COM7', 9600)  # Altere para a porta serial correta
+ser = serial.Serial('COM5', 9600)  # Altere para a porta serial correta
 
 def serial_listener(callback_position, callback_scale):
     while True:
         data = unpack_data()
-        packet_id, x, y, z = parse_packet(data)
-        if packet_id == ID_POSITION:
+        packet_id, x, y, z = data["packet_id"], data["x"], data["y"], data["z"]
+        if int.from_bytes(packet_id, byteorder='big') == ID_POSITION:
             callback_position(x, y, z)
             data_queue.put(("POSITION", x, y, z))
-        elif packet_id == ID_SCALE:
+        elif int.from_bytes(packet_id, byteorder='big') == ID_SCALE:
             callback_scale(x)
             data_queue.put(("SCALE", x, x, x))  # Note que x=x=y=z nesse caso
 
