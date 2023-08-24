@@ -5,7 +5,7 @@ import numpy as np
 import serial
 import threading
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D, art3d
 from matplotlib.animation import FuncAnimation
 
 # Estrutura do pacote
@@ -17,7 +17,7 @@ ID_SCALE = 2
 
 SCALE = 1.0
 
-elev, azim = 0
+elev, azim = 0, 0
 
 axes = [5, 5, 5]
 
@@ -101,7 +101,7 @@ def update_scale(scale):
     global SCALE
     SCALE = scale / 2047.0  # Convertendo escala de 0 a 2047 para 0 a 1
 
-ser = serial.Serial('COM4', 9600)  # Altere para a porta serial correta
+ser = serial.Serial('COM8', 9600)  # Altere para a porta serial correta
 
 def serial_listener(callback_position, callback_scale):
     while True:
@@ -120,6 +120,8 @@ def update_position(x, y, z):
     elev, azim = x, y
 
 def update_cube(frame):
+    #cube = art3d.Poly3DCollection(vertices, alpha=0.8, facecolor='gray')
+    #ax.add_collection3d(cube)
     ax.view_init(elev=elev, azim=azim)
 
 def write_to_csv():
@@ -145,5 +147,5 @@ if __name__ == "__main__":
     thread2 = threading.Thread(target=write_to_csv)
     thread1.start()
     thread2.start()
-    ani = FuncAnimation(fig=fig, func=update_cube, frames=30, interval=30)
+    ani = FuncAnimation(fig=fig, func=update_cube, frames=60, interval=200)
     plt.show()
